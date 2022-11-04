@@ -1,47 +1,68 @@
 """ GRAPHENTHEORIE: Einfach einen shortest path algorithmus (Moore oder Dijkstra, etc.) benutzen um die kürzesten Wege zu finden"""
 # Alternativ: durch die Nachbarsnachbarn iterieren
-from graph import *
+#from graph import *
 
+class Graph:
+    # Adjazenzliste, nur als Dictionary um Abfragen einfacher und Code lesbarer zu machen
+    def __init__(self, graph):
+        self.Graph = graph
+        
+    def add_node(self, start_node, end_node):
+        if start_node not in self.Graph:
+            self.Graph[start_node] = []
+        self.Graph[start_node].append(end_node.strip())
+        
+    def neighbours(self, start_node):
+        try:
+            return self.Graph[start_node]
+        except KeyError:
+            return []
+
+def find(node_list, searched):
+    """
+    Sucht in einer Liste der Knoten nach dem Element mit bekanntem Knotennamen und unbekannter Entfernung. 
+    """
+    return list(filter(lambda i: i[0] == searched, lst))[0] 
+    
+
+def moore(graph, start):
+    g = [(i,"u") for i in set([*[nb for nb_lst in graph.Graph.values() for nb in nb_lst], *graph.Graph.keys()])] 
+    #print(f"{g=}")
+    g[g.index((start,"u"))] = (start,0)
+    to_be_processed = [(start,0)]
+    while to_be_processed:
+        chosen_node = to_be_processed[0]
+        to_be_processed.pop(0)
+        for neighbour in graph.neighbours(chosen_node[0]):
+            t = find(g, neighbour)[0]
+            if t[1]=="u":
+                new_distance = chosen_node[1] + 1
+                t = (t[0],new_distance)
+                g[g.index(find(g, t[0])[0])] = t
+                to_be_processed.append(t)
+    # since not all nodes are connected to the starting one, we can filter them out:
+    
+    return list(filter(lambda i: i[1]!="u", g))
+                
+                
+        
 def create_graph(lines):
-    graph = Graph()
+    graph = Graph(dict())
     for i in lines:
-        graph.addKante(*i.split(" "))
-        print(*i.split(" "))
+        graph.add_node(*i.split(" "))
     return graph
 
-with open("huepfburg0.txt") as f:
-    a = create_graph(f.readlines()[1:])
 
-
-
-def get_near(start, graph):
-    own_graph = dict({start:[graph[start]]})
-    return own_graph
-
-def find_next_neighbours(start, graph):
-    graph[start].append([])
-    for i in graph[start][-2]:
-        #print("a:",graph[i])
-        graph[start][-1] += graph[i][-1]
         
-        
-def clean_up_associations(graph, start):
-    g=graph[start][::-1]
-    for i,j in enumerate(g[:-1]):
-        j = list(set(j))
-        j = list(filter(lambda x : x not in [k for l in g[i+1:] for k in l], j))
-        g[i] = j
-        print("j: ",g[i])
-    return g[::-1]
+
 
 def main():
-    for i in range(3):
-        find_next_neighbours("1", a)
-    for i in range(3):
-        find_next_neighbours("2", a)
-    clean_up_associations(a, "1")
-    clean_up_associations(a, "2")
+    s=(None,None, 1000)
+    with open("huepfburg2.txt") as f:
+        a = create_graph(f.readlines()[1:])
+    nb1 = moore(a,"1")
+    nb2 = moore(a,"2")
+    return min(((x,y) for x in nb1 for y in filter(lambda i: i==x,nb2)))
 
-
-def finde_nachbarn(graph, start):
-    return graph[start]
+if __name__ == "__main__":
+    print(main())
